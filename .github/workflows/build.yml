@@ -16,18 +16,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
         with:
-          python-version: '3.10'
+          dotnet-version: '8.0.x'
 
-      - name: Install dependencies
-        run: pip install pyinstaller requests pyqt5
+      - name: Restore dependencies
+        run: dotnet restore
 
-      - name: Build Windows Executable
-        run: |
-          pyinstaller --noconsole --onefile --icon=icon.ico dcs_livery_installer.py
-        working-directory: .
+      - name: Build Single Executable
+        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -o dist
 
       - name: Install Inno Setup
         run: choco install innosetup -y
@@ -37,7 +35,7 @@ jobs:
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer_script.iss"
         working-directory: .
 
-      - name: Upload Artifacts (Installer)
+      - name: Upload Installer as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DCS_Livery_Updater_Installer
