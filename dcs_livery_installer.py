@@ -20,8 +20,16 @@ def get_default_branch():
         return response.json().get("default_branch", "main")
     return "main"
 
+def log_message(message):
+    """Logs messages to a file in the install directory"""
+    install_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+    log_file = os.path.join(install_dir, "livery_updater.log")
+    with open(log_file, "a") as log:
+        log.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {message}\n")
+
 def download_and_extract():
     """Downloads and installs the latest liveries"""
+    log_message("Starting livery update...")
     repo_owner = "pschilly"
     repo_name = "gtfo-liveries"
     default_branch = get_default_branch()
@@ -42,10 +50,12 @@ def download_and_extract():
     with open(zip_path, 'wb') as f:
         for chunk in response.iter_content(chunk_size=1024):
             f.write(chunk)
+    log_message("Download completed.")
     
     # Extract ZIP
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(extract_path)
+    log_message("Extraction completed.")
     
     # Find extracted folder
     extracted_folder = os.path.join(extract_path, f"{repo_name}-{default_branch}")
@@ -61,9 +71,11 @@ def download_and_extract():
             if os.path.exists(dst_path):
                 shutil.rmtree(dst_path, ignore_errors=True)
             shutil.copytree(src_path, dst_path)
+    log_message("Liveries copied to destination.")
     
     # Cleanup temp files
     shutil.rmtree(temp_dir, ignore_errors=True)
+    log_message("Cleanup completed.")
     
     global last_update_time
     last_update_time = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -76,74 +88,5 @@ def check_for_updates():
         try:
             download_and_extract()
         except Exception as e:
-            print(f"Update check failed: {e}")
+            log_message(f"Update check failed: {e}")
         time.sleep(900)  # Wait 15 minutes before checking again
-
-class LiveryUpdaterGUI(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("DCS Livery Updater")
-        self.setGeometry(100, 100, 300, 150)
-        layout = QVBoxLayout()
-        
-        self.label = QLabel("Last Update: N/A", self)
-        layout.addWidget(self.label)
-        
-        self.update_button = QPushButton("Update Liveries Now", self)
-        self.update_button.clicked.connect(self.update_liveries)
-        layout.addWidget(self.update_button)
-        
-        self.setLayout(layout)
-    
-    def update_liveries(self):
-        message = download_and_extract()
-        self.label.setText(f"Last Update: {last_update_time}")
-
-class LiveryUpdaterApp:
-    def __init__(self):
-        self.app = QApplication(sys.argv)
-        self.app.setQuitOnLastWindowClosed(False)
-        self.gui = LiveryUpdaterGUI()
-        self.tray_icon = QSystemTrayIcon(QIcon("icon.ico"), self.app)
-        self.menu = QMenu()
-
-        self.update_action = QAction("Update Liveries Now", self.app)
-        self.update_action.triggered.connect(self.update_liveries)
-        self.menu.addAction(self.update_action)
-        
-        self.show_gui_action = QAction("Show GUI", self.app)
-        self.show_gui_action.triggered.connect(self.show_gui)
-        self.menu.addAction(self.show_gui_action)
-        
-        self.exit_action = QAction("Exit", self.app)
-        self.exit_action.triggered.connect(self.exit_app)
-        self.menu.addAction(self.exit_action)
-        
-        self.tray_icon.setContextMenu(self.menu)
-        self.tray_icon.show()
-        self.tray_icon.setToolTip("DCS Livery Updater\nLast Update: N/A")
-        
-        # Start background thread for checking updates
-        self.update_thread = Thread(target=check_for_updates, daemon=True)
-        self.update_thread.start()
-    
-    def update_liveries(self):
-        message = download_and_extract()
-        self.tray_icon.showMessage("DCS Livery Updater", message, QSystemTrayIcon.Information)
-        self.tray_icon.setToolTip(f"DCS Livery Updater\nLast Update: {last_update_time}")
-    
-    def show_gui(self):
-        self.gui.show()
-    
-    def exit_app(self):
-        self.tray_icon.hide()
-        sys.exit()
-
-    def run(self):
-        self.gui.show()
-        sys.exit(self.app.exec_())
-
-if __name__ == "__main__":
-    last_update_time = "N/A"
-    app = LiveryUpdaterApp()
-    app.run()
