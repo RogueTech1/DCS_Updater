@@ -79,28 +79,10 @@ def check_for_updates():
             print(f"Update check failed: {e}")
         time.sleep(900)  # Wait 15 minutes before checking again
 
-def add_to_startup():
-    """Adds this application to Windows Startup"""
-    startup_folder = os.path.join(os.getenv("APPDATA"), "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
-    script_path = os.path.abspath(sys.argv[0])
-    shortcut_path = os.path.join(startup_folder, "DCS_Livery_Updater.lnk")
-    
-    import winshell
-    from win32com.client import Dispatch
-    
-    shell = Dispatch('WScript.Shell')
-    shortcut = shell.CreateShortcut(shortcut_path)
-    shortcut.TargetPath = script_path
-    shortcut.WorkingDirectory = os.path.dirname(script_path)
-    shortcut.Description = "DCS Livery Updater"
-    shortcut.IconLocation = script_path
-    shortcut.Save()
-    
-    return "Added to Startup"
-
 class LiveryUpdaterApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
+        self.app.setQuitOnLastWindowClosed(False)
         self.tray_icon = QSystemTrayIcon(QIcon("icon.ico"), self.app)
         self.menu = QMenu()
 
@@ -139,6 +121,5 @@ class LiveryUpdaterApp:
 
 if __name__ == "__main__":
     last_update_time = "N/A"
-    add_to_startup()
     app = LiveryUpdaterApp()
     app.run()
