@@ -3,8 +3,10 @@ import os
 import requests
 import zipfile
 import shutil
-from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction, QMessageBox
+import time
+from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtGui import QIcon
+from threading import Thread
 
 def get_default_branch():
     """Fetch the default branch of the GitHub repo"""
@@ -64,6 +66,15 @@ def download_and_extract():
     
     return "Liveries installed successfully!"
 
+def check_for_updates():
+    """Runs in the background to check for updates every 15 minutes"""
+    while True:
+        try:
+            download_and_extract()
+        except Exception as e:
+            print(f"Update check failed: {e}")
+        time.sleep(900)  # Wait 15 minutes before checking again
+
 class LiveryUpdaterApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
@@ -81,6 +92,10 @@ class LiveryUpdaterApp:
         self.tray_icon.setContextMenu(self.menu)
         self.tray_icon.show()
         self.tray_icon.setToolTip("DCS Livery Updater")
+        
+        # Start background thread for checking updates
+        self.update_thread = Thread(target=check_for_updates, daemon=True)
+        self.update_thread.start()
     
     def update_liveries(self):
         """Handle livery update event"""
