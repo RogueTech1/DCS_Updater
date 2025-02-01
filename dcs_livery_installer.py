@@ -5,7 +5,7 @@ import zipfile
 import shutil
 import time
 import ctypes
-from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
+from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction, QWidget, QVBoxLayout, QPushButton, QLabel
 from PyQt5.QtGui import QIcon
 from threading import Thread
 
@@ -79,16 +79,41 @@ def check_for_updates():
             print(f"Update check failed: {e}")
         time.sleep(900)  # Wait 15 minutes before checking again
 
+class LiveryUpdaterGUI(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("DCS Livery Updater")
+        self.setGeometry(100, 100, 300, 150)
+        layout = QVBoxLayout()
+        
+        self.label = QLabel("Last Update: N/A", self)
+        layout.addWidget(self.label)
+        
+        self.update_button = QPushButton("Update Liveries Now", self)
+        self.update_button.clicked.connect(self.update_liveries)
+        layout.addWidget(self.update_button)
+        
+        self.setLayout(layout)
+    
+    def update_liveries(self):
+        message = download_and_extract()
+        self.label.setText(f"Last Update: {last_update_time}")
+
 class LiveryUpdaterApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
         self.app.setQuitOnLastWindowClosed(False)
+        self.gui = LiveryUpdaterGUI()
         self.tray_icon = QSystemTrayIcon(QIcon("icon.ico"), self.app)
         self.menu = QMenu()
 
         self.update_action = QAction("Update Liveries Now", self.app)
         self.update_action.triggered.connect(self.update_liveries)
         self.menu.addAction(self.update_action)
+        
+        self.show_gui_action = QAction("Show GUI", self.app)
+        self.show_gui_action.triggered.connect(self.show_gui)
+        self.menu.addAction(self.show_gui_action)
         
         self.exit_action = QAction("Exit", self.app)
         self.exit_action.triggered.connect(self.exit_app)
@@ -103,20 +128,19 @@ class LiveryUpdaterApp:
         self.update_thread.start()
     
     def update_liveries(self):
-        """Handle livery update event"""
-        try:
-            message = download_and_extract()
-            self.tray_icon.showMessage("DCS Livery Updater", message, QSystemTrayIcon.Information)
-            self.tray_icon.setToolTip(f"DCS Livery Updater\nLast Update: {last_update_time}")
-        except Exception as e:
-            self.tray_icon.showMessage("DCS Livery Updater", f"Error: {str(e)}", QSystemTrayIcon.Critical)
+        message = download_and_extract()
+        self.tray_icon.showMessage("DCS Livery Updater", message, QSystemTrayIcon.Information)
+        self.tray_icon.setToolTip(f"DCS Livery Updater\nLast Update: {last_update_time}")
+    
+    def show_gui(self):
+        self.gui.show()
     
     def exit_app(self):
-        """Exit application"""
         self.tray_icon.hide()
         sys.exit()
 
     def run(self):
+        self.gui.show()
         sys.exit(self.app.exec_())
 
 if __name__ == "__main__":
