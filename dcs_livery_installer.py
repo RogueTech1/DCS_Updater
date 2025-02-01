@@ -4,6 +4,7 @@ import requests
 import zipfile
 import shutil
 import time
+import ctypes
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtGui import QIcon
 from threading import Thread
@@ -64,6 +65,9 @@ def download_and_extract():
     # Cleanup temp files
     shutil.rmtree(temp_dir, ignore_errors=True)
     
+    global last_update_time
+    last_update_time = time.strftime("%Y-%m-%d %H:%M:%S")
+    
     return "Liveries installed successfully!"
 
 def check_for_updates():
@@ -75,13 +79,32 @@ def check_for_updates():
             print(f"Update check failed: {e}")
         time.sleep(900)  # Wait 15 minutes before checking again
 
+def add_to_startup():
+    """Adds this application to Windows Startup"""
+    startup_folder = os.path.join(os.getenv("APPDATA"), "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
+    script_path = os.path.abspath(sys.argv[0])
+    shortcut_path = os.path.join(startup_folder, "DCS_Livery_Updater.lnk")
+    
+    import winshell
+    from win32com.client import Dispatch
+    
+    shell = Dispatch('WScript.Shell')
+    shortcut = shell.CreateShortcut(shortcut_path)
+    shortcut.TargetPath = script_path
+    shortcut.WorkingDirectory = os.path.dirname(script_path)
+    shortcut.Description = "DCS Livery Updater"
+    shortcut.IconLocation = script_path
+    shortcut.Save()
+    
+    return "Added to Startup"
+
 class LiveryUpdaterApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
         self.tray_icon = QSystemTrayIcon(QIcon("icon.ico"), self.app)
         self.menu = QMenu()
 
-        self.update_action = QAction("Update Liveries", self.app)
+        self.update_action = QAction("Update Liveries Now", self.app)
         self.update_action.triggered.connect(self.update_liveries)
         self.menu.addAction(self.update_action)
         
@@ -91,7 +114,7 @@ class LiveryUpdaterApp:
         
         self.tray_icon.setContextMenu(self.menu)
         self.tray_icon.show()
-        self.tray_icon.setToolTip("DCS Livery Updater")
+        self.tray_icon.setToolTip("DCS Livery Updater\nLast Update: N/A")
         
         # Start background thread for checking updates
         self.update_thread = Thread(target=check_for_updates, daemon=True)
@@ -102,6 +125,7 @@ class LiveryUpdaterApp:
         try:
             message = download_and_extract()
             self.tray_icon.showMessage("DCS Livery Updater", message, QSystemTrayIcon.Information)
+            self.tray_icon.setToolTip(f"DCS Livery Updater\nLast Update: {last_update_time}")
         except Exception as e:
             self.tray_icon.showMessage("DCS Livery Updater", f"Error: {str(e)}", QSystemTrayIcon.Critical)
     
@@ -114,5 +138,7 @@ class LiveryUpdaterApp:
         sys.exit(self.app.exec_())
 
 if __name__ == "__main__":
+    last_update_time = "N/A"
+    add_to_startup()
     app = LiveryUpdaterApp()
     app.run()
