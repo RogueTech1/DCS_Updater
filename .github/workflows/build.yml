@@ -34,7 +34,7 @@ jobs:
 
       - name: Create Windows Installer
         run: |
-          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer_script.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer_script.iss"
         working-directory: .
 
       - name: Upload Artifacts (Installer)
