@@ -6,8 +6,7 @@ DefaultGroupName=DCS Livery Updater
 UninstallDisplayIcon={app}\dcs_livery_installer.exe
 OutputDir=.
 OutputBaseFilename=DCS_Livery_Updater_Installer
-SetupIconFile=DCS_Icon_Green.ico
-
+SetupIconFile=icon.ico
 [Files]
 Source: "dist\dcs_livery_installer.exe"; DestDir: "{app}"; Flags: ignoreversion
 
