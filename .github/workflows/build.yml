@@ -22,13 +22,14 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore DcsLiveryUpdater/DcsLiveryUpdater.csproj
+        run: dotnet restore dcs_livery_installer/dcs_livery_installer.csproj
 
       - name: Build Single Executable
-        run: dotnet publish DcsLiveryUpdater/DcsLiveryUpdater.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist
+        run: |
+          dotnet publish dcs_livery_installer/dcs_livery_installer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist
 
       - name: Upload Executable as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DCS_Livery_Updater
-          path: dist/DcsLiveryUpdater.exe
+          path: dist/dcs_livery_installer.exe
