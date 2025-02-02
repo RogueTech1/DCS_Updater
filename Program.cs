@@ -2,9 +2,9 @@ using System;
 using System.IO;
 using System.Net;
 using System.IO.Compression;
-using System.Timers;
 using System.Diagnostics;
 using System.Windows.Forms;
+using System.Timers;
 
 class DcsLiveryUpdater
 {
@@ -13,7 +13,7 @@ class DcsLiveryUpdater
     private static readonly string installDir = AppDomain.CurrentDomain.BaseDirectory;
     private static readonly string logFile = Path.Combine(installDir, "livery_updater.log");
     private static NotifyIcon trayIcon;
-    private static Timer updateTimer;
+    private static System.Timers.Timer updateTimer;
 
     [STAThread]
     static void Main()
@@ -33,8 +33,9 @@ class DcsLiveryUpdater
         menu.Items.Add("Exit", null, (s, e) => ExitApplication());
         trayIcon.ContextMenuStrip = menu;
         
-        updateTimer = new Timer(900000); // 15 minutes
+        updateTimer = new System.Timers.Timer(900000); // 15 minutes
         updateTimer.Elapsed += (s, e) => UpdateLiveries();
+        updateTimer.AutoReset = true;
         updateTimer.Start();
         
         Application.Run();
