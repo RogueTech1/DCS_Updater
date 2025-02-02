@@ -1,0 +1,3 @@
+git add dcs_livery_installer.csproj
+git commit -m "Added missing .csproj file"
+git push
