@@ -22,39 +22,13 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore DcsLiveryUpdater/DcsLiveryUpdater.csproj
 
       - name: Build Single Executable
-        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -o dist
+        run: dotnet publish DcsLiveryUpdater/DcsLiveryUpdater.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist
 
-      - name: Install Inno Setup
-        run: choco install innosetup -y
-
-      - name: Create Windows Installer
-        run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer_script.iss"
-        working-directory: .
-
-      - name: Upload Installer as Artifact
+      - name: Upload Executable as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DCS_Livery_Updater_Installer
-          path: ./DCS_Livery_Updater_Installer.exe
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-
-    steps:
-      - name: Download Installer
-        uses: actions/download-artifact@v4
-        with:
-          name: DCS_Livery_Updater_Installer
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ./DCS_Livery_Updater_Installer.exe
-          draft: false
-          prerelease: false
+          name: DCS_Livery_Updater
+          path: dist/DcsLiveryUpdater.exe
