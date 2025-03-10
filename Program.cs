@@ -2,9 +2,8 @@ using System;
 using System.IO;
 using System.Net;
 using System.IO.Compression;
-using System.Diagnostics;
 using System.Windows.Forms;
-using System.Timers;
+using System.Drawing;
 
 class DcsLiveryUpdater
 {
